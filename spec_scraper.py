@@ -8,6 +8,17 @@ ALL_DATA_DICT = {}
 
 
 def save_final_data_to_json():
+    # Clean the data before saving
+    print("Cleaning data before saving")
+    keys_for_deletion = []
+    for brand, data in ALL_DATA_DICT.items():
+        if not data:
+            keys_for_deletion.append(brand)
+    print("Removing entries with empty dictionary values")
+    for key in keys_for_deletion:
+        del ALL_DATA_DICT[key]
+    
+    # Saving data
     print("Preparing for final save..")
     print("Converting dictionary to JSON..")
     all_data_json = json.dumps(ALL_DATA_DICT)
@@ -26,7 +37,9 @@ def parse_spec_page(brand_name, spec_page_url):
     bike_picture = image_tag["src"] # bike_picture
 
     # Get bike name
-    bike_model_name = image_tag["alt"] # bike_model_name
+    bike_model_name = image_tag["alt"]
+    bike_model_name = bike_model_name.replace("(", "aka ")
+    bike_model_name = bike_model_name.replace(")", "") # bike_model_name
 
     # Get the price range
     price_div = soup.find("div", class_="price")
@@ -41,9 +54,20 @@ def parse_spec_page(brand_name, spec_page_url):
     for table in spec_tables:
         table_rows = table.find_all("tr")
         for data in table_rows:
+            # Clean data
             key = data.find("td").get_text().lower()
             key = key.replace(" ", "_")
+            key = key.replace("(", "")
+            key = key.replace(")", "")
+            key = key.replace(".", "")
+            if key == "mileage_":
+                key = "mileage"
+            if key == "range":
+                key = "range_km"
             value = data.find("td", class_="right").get_text()
+            value = value.replace("(", "")
+            value = value.replace(")", "")
+            # Add data to dict
             ALL_DATA_DICT[brand_name][bike_model_name][key] = value
     # Store all remaining info into ALL_DATA_DICT
     ALL_DATA_DICT[brand_name][bike_model_name]["bike_picture"] = bike_picture
@@ -78,7 +102,7 @@ def start():
     n = 1
     for brand_name, brand_links_list in all_brand_bike_pages_dict.items():
         print(f"Parsnig spec links for brand {n} of {total_brands}")
-        parse_spec_links(brand_name, brand_links_list)
+        parse_spec_links(brand_name.replace("-", "_"), brand_links_list)
         n += 1
     print("Finished parsing spec links for all brands")
     save_final_data_to_json()
