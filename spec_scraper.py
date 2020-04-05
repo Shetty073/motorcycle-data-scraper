@@ -18,7 +18,6 @@ def save_final_data_to_json():
 
 
 def parse_spec_page(brand_name, spec_page_url):
-    ALL_DATA_DICT[brand_name] = {}
     soup = get_soup(spec_page_url)
     # Get bike picture
     image_div = soup.find("div", class_="imgleft")
@@ -36,7 +35,7 @@ def parse_spec_page(brand_name, spec_page_url):
     bike_price = price_span.get_text() # bike_price
 
     # Get technical specs
-    specs_dict = {}
+    ALL_DATA_DICT[brand_name][bike_model_name] = {}
     tech_spec_div = soup.find("div", id="technicalSpecsTop")
     spec_tables = tech_spec_div.find_all("table")
     for table in spec_tables:
@@ -45,12 +44,10 @@ def parse_spec_page(brand_name, spec_page_url):
             key = data.find("td").get_text().lower()
             key = key.replace(" ", "_")
             value = data.find("td", class_="right").get_text()
-            specs_dict[key] = value
-    # Store all info into ALL_DATA_DICT
-    ALL_DATA_DICT[brand_name][bike_model_name] = {}
+            ALL_DATA_DICT[brand_name][bike_model_name][key] = value
+    # Store all remaining info into ALL_DATA_DICT
     ALL_DATA_DICT[brand_name][bike_model_name]["bike_picture"] = bike_picture
     ALL_DATA_DICT[brand_name][bike_model_name]["bike_price"] = bike_price
-    ALL_DATA_DICT[brand_name][bike_model_name]["bike_specs"] = specs_dict
 
 
 def parse_spec_links(brand_name, brand_links_list):
@@ -65,13 +62,15 @@ def parse_spec_links(brand_name, brand_links_list):
 
 
 def start():
+    # First check if file is empty
     with open("brand_links.json", "r") as json_file:
-        # Check if file is empty
         one_char = json_file.read(1)
         if not one_char:
             print("'brand_links.json' is empty..")
             print("Starting main scraper..")
             start_main_scraper()
+    # Continue with spec_parser code
+    with open("brand_links.json", "r") as json_file:
         print("Loading data from 'brand_links.json' to a dictionary")
         all_brand_bike_pages_json = json_file.read()
     all_brand_bike_pages_dict = json.loads(all_brand_bike_pages_json)
