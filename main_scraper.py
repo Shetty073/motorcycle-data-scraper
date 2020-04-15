@@ -52,10 +52,18 @@ def save_brand_links(url):
     for link in brand_links:
         urls.append(BASE_URL + link["href"])
     brand_links_parser(urls)
-    # urls_dict = {"urls": urls}
-    # urls_json = json.dumps(urls_dict)
-    # with open("brand_links.json", "w") as json_file:
-    #     json_file.write(urls_json)
+    # Get brand logos
+    url = "https://bd.gaadicdn.com/pwa/img/"
+    dct = {}
+    img_dct = {}
+    with open("brand_links.json", "r") as json_file:
+        dct = json.loads(json_file.read())
+    for k in dct.keys():
+        img_dct[k] = f"{url}{k[:-6]}.png"
+
+
+    with open("brand_logos.json", "w") as json_file:
+        json_file.write(json.dumps(img_dct))
     
 
 
